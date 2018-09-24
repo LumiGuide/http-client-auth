@@ -32,7 +32,7 @@ library
                    , blaze-builder    >= 0.3
                    , bytestring       >= 0.9
                    , case-insensitive >= 1.2
-                   , conduit          >= 1.0
+                   , conduit          >= 1.2.8
                    , crypto-conduit   >= 0.5
                    , http-conduit     >= 2.0
                    , mtl              >= 2.0.1

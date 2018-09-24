@@ -51,7 +51,7 @@ import qualified Data.ByteString.Lazy.UTF8    as LU (fromString)
 import qualified Data.ByteString.UTF8         as BU (fromString, toString)
 import           Data.CaseInsensitive         (mk)
 import           Data.Char                    (isAlphaNum, isAscii, isSpace)
-import           Data.Conduit                 (yield, ($$), (=$))
+import           Data.Conduit                 (yield, ($$), (=$), (.|), runConduit)
 import qualified Data.Conduit.List            as CL (concatMap, sourceList)
 import           Data.Digest.Pure.MD5         (MD5Digest, md5)
 import           Data.List                    (intersperse, isPrefixOf)
@@ -460,13 +460,13 @@ makeRequestUri req =
 makeRequestBodyHash :: Monad m => Request -> m String
 makeRequestBodyHash req =
     case requestBody req of
-        RequestBodyLBS lbs -> CL.sourceList (L.toChunks lbs) $$ hashSink
-        RequestBodyBS bs -> yield bs $$ hashSink
-        RequestBodyBuilder _ bldr -> yield bldr $$ bldrSink
+        RequestBodyLBS lbs -> runConduit $ CL.sourceList (L.toChunks lbs) .| hashSink
+        RequestBodyBS bs -> runConduit $ yield bs .| hashSink
+        RequestBodyBuilder _ bldr -> runConduit $ yield bldr .| bldrSink
         -- RequestBodyStream _ bldr -> bldr $$ bldrSink
         -- RequestBodyStreamChunked bldr -> bldr $$ bldrSink
     where
-      bldrSink = CL.concatMap (L.toChunks . toLazyByteString) =$ hashSink
+      bldrSink = CL.concatMap (L.toChunks . toLazyByteString) .| hashSink
       hashSink = fmap (show :: MD5Digest -> String) sinkHash
 
 -- | This is the main function. It sends a request, gets the response, and,
