@@ -1,3 +1,4 @@
+{-# language CPP #-}
 ------------------------------------------------------------------------
 -- |
 -- Module      : HLint
@@ -65,7 +66,14 @@ data Once a = NotEncountered
             | Multiple
             deriving Show
 
-
+#if MIN_VERSION_base(4,11,0)
+instance Semigroup (Once a) where
+    NotEncountered <> o = o
+    Once a <> NotEncountered = Once a
+    Once _ <> Once _ = Multiple
+    Once _ <> Multiple = Multiple
+    Multiple <> _ = Multiple
+#endif
 
 instance Monoid (Once a) where
     mempty = NotEncountered
@@ -124,6 +132,21 @@ data MDigestChallenge = MDigestChallenge
     } deriving Show
 
 
+#if MIN_VERSION_base(4,11,0)
+instance Semigroup MDigestChallenge where
+    md1 <> md2 =
+        let mapp f = mappend (f md1) (f md2)
+        in MDigestChallenge
+               { mDigestRealm = mapp mDigestRealm
+               , mDomain = mapp mDomain
+               , mNonce = mapp mNonce
+               , mOpaque = mapp mOpaque
+               , mStale = mapp mStale
+               , mAlgorithm = mapp mAlgorithm
+               , mQop = mapp mQop
+               }
+#endif
+
 instance Monoid MDigestChallenge where
     mempty = MDigestChallenge
            { mDigestRealm = mempty
@@ -169,6 +192,11 @@ data QopValue = Auth
               | AuthInt
               deriving Show
 
+#if MIN_VERSION_base(4,11,0)
+instance Semigroup QopValue where
+    Auth    <> _ = Auth
+    AuthInt <> a = a
+#endif
 
 instance Monoid QopValue where
     mempty = AuthInt
